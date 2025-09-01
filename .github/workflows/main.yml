@@ -1,0 +1,99 @@
+name: Deploy .NET Console App to AWS EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'  # Adjust to match your project
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Publish project
+      run: dotnet publish --configuration Release --output ./publish
+
+    - name: Upload to EC2 via SCP
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: 54.83.167.15
+        username: msq9831
+        key: -----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEAvYvxFBn+04KiP7r71a6NO1c5m3Ad2ydL5VqKOOWJti48YXed
+zj1D4lnL/Au8h6A3NI0bMfoE666fOXtpVYWlFs2+y465fEwXKBW6PeBYR+x+UFhH
+3B+HJzFpzd/+z0xVabV4R9opZnDgUKUKjg2hhACj6ip7O31/rw47uQV+209ec3zY
+3Vf2B4thaZ/Ejyz1Eg6HcVCQDeoUdJfmgWa6CTvvGzU8VOte1ltxGuqGlMFVvSXk
+3f59tTPGVGLfgF6BGyMkILC/f5nVtMzT6fLi2ZLj3/WNWgKXj67LzHMSKBJbIqSt
+C1CYArYAcswXOVC4ga8RuxClJJKyPpm+1Z1QYQIDAQABAoIBAQC1R90Gw6Hy+jJg
+z11BzZJnmZGP9tenHNs6fLBLoERoB6pZ8YPslq2REx7DbRofgHyr9vR2hM8l9Tl1
+SXHBiHMO7zG2D0eY+FEBVl5sBV+JUkawYu4/OawSMPEnJD7YVgIueo+R8LW9suDm
+YCJLIABEdjROpdh8Whe+/dbiqr3b0lKSdgfp88tOKstTj87jidYlgR4c8yKknNhf
+K2xsJF3/fosEXlymuZj3od4LRKqNxA1Hlthj1k5gwQ9OT1YqEC7dXG3T/9CiI8H9
+Xpy2dKOS4tYoh9cppXee5NW1kZk7XfiWlAU4paDycTnu6eJA1oXc+yjnbdLOx0F+
+6ey9SiJRAoGBAPJm51aPqI0HaJ4dadU556HLlG0HbAWT+e1gEYuV3WhqQ9nbuW/P
+/Jlcp2gNNIf7MZcSVLcW6q3jva1cyosmgH8aecM0LaksilF5sdRUSFnqXyCxK+FV
+xvgxOc0iAsenEQNBkbuht9WKuwRgtgwRdoA0/ZzOg6eYa3qIokTXVhidAoGBAMgt
+/bwaxX88UljZ5QPNXNgQEJdDJ/yWs6wgU0EIDL4xzkMBOZrCheEsmK0KtcuNbse7
+VmzZRz2OFK69udwUNkxpio7Et1CPAibz+6jAiJcTgHYcSCTEVu7kmIzeBrVi3L1s
+yppIjimb+YNExvJAMAc7mKD0WUpUdI6N/OK0q+GVAoGBAIJNOJv6W1N8IQulqgdZ
+uh7qDV5SeAnDkry8QJI1PDBttw18JIFrX1CdUswHFS7no6+exfUpl3tkCckQMTx9
+tOMeO0foW4cuDyhe723A5KeY6gvr0Teu4Wb3JygS2UWzk9yZOZqQAv8CNSfUSOfR
+105xrcbF6FWGBHh4zCmPS5OtAoGAIaURO3docF0sHgDpa/0tOKdiknnYE60kn66D
+L6/xrFnkqABhtTAynkkHlDXznjW0Q9+pw/u07JSfx0reHS5MfgVTI3HOubx/iRqC
+1rcdff7qHW/ddEiHr/k95pc+m2f1X+UUHGBLfJTZmAWMRpUhPWX33j2TcFnHiVo2
+AciKBw0CgYEAtxL+3RXA6LVKOpyav67/2ZIFxXAKcIn7aqg0WYZhhfn/OfYynQut
+H0MCgGHxOrxJrfY6el6M2yWeiRqF0FKu0hdkJsgAd8P8J9x/r2ylTriw0p9YgIv8
+qX1H8GKHqJ4UA9mLUYlQgfx5frPO/ymxvhfu0fO0RyzWIpxx74FHd0U=
+-----END RSA PRIVATE KEY-----
+        source: "./publish/*"
+        target: "/home/ec2-user/dotnet-app"
+
+    - name: Run app on EC2
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: 54.83.167.15
+        username: msq9831
+        key: -----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEAvYvxFBn+04KiP7r71a6NO1c5m3Ad2ydL5VqKOOWJti48YXed
+zj1D4lnL/Au8h6A3NI0bMfoE666fOXtpVYWlFs2+y465fEwXKBW6PeBYR+x+UFhH
+3B+HJzFpzd/+z0xVabV4R9opZnDgUKUKjg2hhACj6ip7O31/rw47uQV+209ec3zY
+3Vf2B4thaZ/Ejyz1Eg6HcVCQDeoUdJfmgWa6CTvvGzU8VOte1ltxGuqGlMFVvSXk
+3f59tTPGVGLfgF6BGyMkILC/f5nVtMzT6fLi2ZLj3/WNWgKXj67LzHMSKBJbIqSt
+C1CYArYAcswXOVC4ga8RuxClJJKyPpm+1Z1QYQIDAQABAoIBAQC1R90Gw6Hy+jJg
+z11BzZJnmZGP9tenHNs6fLBLoERoB6pZ8YPslq2REx7DbRofgHyr9vR2hM8l9Tl1
+SXHBiHMO7zG2D0eY+FEBVl5sBV+JUkawYu4/OawSMPEnJD7YVgIueo+R8LW9suDm
+YCJLIABEdjROpdh8Whe+/dbiqr3b0lKSdgfp88tOKstTj87jidYlgR4c8yKknNhf
+K2xsJF3/fosEXlymuZj3od4LRKqNxA1Hlthj1k5gwQ9OT1YqEC7dXG3T/9CiI8H9
+Xpy2dKOS4tYoh9cppXee5NW1kZk7XfiWlAU4paDycTnu6eJA1oXc+yjnbdLOx0F+
+6ey9SiJRAoGBAPJm51aPqI0HaJ4dadU556HLlG0HbAWT+e1gEYuV3WhqQ9nbuW/P
+/Jlcp2gNNIf7MZcSVLcW6q3jva1cyosmgH8aecM0LaksilF5sdRUSFnqXyCxK+FV
+xvgxOc0iAsenEQNBkbuht9WKuwRgtgwRdoA0/ZzOg6eYa3qIokTXVhidAoGBAMgt
+/bwaxX88UljZ5QPNXNgQEJdDJ/yWs6wgU0EIDL4xzkMBOZrCheEsmK0KtcuNbse7
+VmzZRz2OFK69udwUNkxpio7Et1CPAibz+6jAiJcTgHYcSCTEVu7kmIzeBrVi3L1s
+yppIjimb+YNExvJAMAc7mKD0WUpUdI6N/OK0q+GVAoGBAIJNOJv6W1N8IQulqgdZ
+uh7qDV5SeAnDkry8QJI1PDBttw18JIFrX1CdUswHFS7no6+exfUpl3tkCckQMTx9
+tOMeO0foW4cuDyhe723A5KeY6gvr0Teu4Wb3JygS2UWzk9yZOZqQAv8CNSfUSOfR
+105xrcbF6FWGBHh4zCmPS5OtAoGAIaURO3docF0sHgDpa/0tOKdiknnYE60kn66D
+L6/xrFnkqABhtTAynkkHlDXznjW0Q9+pw/u07JSfx0reHS5MfgVTI3HOubx/iRqC
+1rcdff7qHW/ddEiHr/k95pc+m2f1X+UUHGBLfJTZmAWMRpUhPWX33j2TcFnHiVo2
+AciKBw0CgYEAtxL+3RXA6LVKOpyav67/2ZIFxXAKcIn7aqg0WYZhhfn/OfYynQut
+H0MCgGHxOrxJrfY6el6M2yWeiRqF0FKu0hdkJsgAd8P8J9x/r2ylTriw0p9YgIv8
+qX1H8GKHqJ4UA9mLUYlQgfx5frPO/ymxvhfu0fO0RyzWIpxx74FHd0U=
+-----END RSA PRIVATE KEY-----
+        script: |
+          cd /home/ec2-user/dotnet-app
+          chmod +x YourAppExecutableName
+          ./YourAppExecutableName
