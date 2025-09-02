@@ -66,7 +66,7 @@ qX1H8GKHqJ4UA9mLUYlQgfx5frPO/ymxvhfu0fO0RyzWIpxx74FHd0U="
       with:
         host: 54.83.167.15
         username: msq9831
-        key: -----BEGIN RSA PRIVATE KEY-----
+        key: "
 MIIEpQIBAAKCAQEAvYvxFBn+04KiP7r71a6NO1c5m3Ad2ydL5VqKOOWJti48YXed
 zj1D4lnL/Au8h6A3NI0bMfoE666fOXtpVYWlFs2+y465fEwXKBW6PeBYR+x+UFhH
 3B+HJzFpzd/+z0xVabV4R9opZnDgUKUKjg2hhACj6ip7O31/rw47uQV+209ec3zY
@@ -91,8 +91,8 @@ L6/xrFnkqABhtTAynkkHlDXznjW0Q9+pw/u07JSfx0reHS5MfgVTI3HOubx/iRqC
 1rcdff7qHW/ddEiHr/k95pc+m2f1X+UUHGBLfJTZmAWMRpUhPWX33j2TcFnHiVo2
 AciKBw0CgYEAtxL+3RXA6LVKOpyav67/2ZIFxXAKcIn7aqg0WYZhhfn/OfYynQut
 H0MCgGHxOrxJrfY6el6M2yWeiRqF0FKu0hdkJsgAd8P8J9x/r2ylTriw0p9YgIv8
-qX1H8GKHqJ4UA9mLUYlQgfx5frPO/ymxvhfu0fO0RyzWIpxx74FHd0U=
------END RSA PRIVATE KEY-----
+qX1H8GKHqJ4UA9mLUYlQgfx5frPO/ymxvhfu0fO0RyzWIpxx74FHd0U="
+
         script: |
           cd /home/ec2-user/dotnet-app
           chmod +x YourAppExecutableName
