@@ -31,7 +31,7 @@ jobs:
       with:
         host: 54.83.167.15
         username: msq9831
-        key: -----BEGIN RSA PRIVATE KEY-----
+        key: |-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEAvYvxFBn+04KiP7r71a6NO1c5m3Ad2ydL5VqKOOWJti48YXed
 zj1D4lnL/Au8h6A3NI0bMfoE666fOXtpVYWlFs2+y465fEwXKBW6PeBYR+x+UFhH
 3B+HJzFpzd/+z0xVabV4R9opZnDgUKUKjg2hhACj6ip7O31/rw47uQV+209ec3zY
