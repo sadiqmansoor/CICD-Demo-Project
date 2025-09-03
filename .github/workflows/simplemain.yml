@@ -3,7 +3,7 @@ name: Deploy .NET Console App to EC2 via SSH
 on:
   push:
     branches:
-      - main
+      - master
 
 env:
   PROJECT_PATH: 'HelloWorldApp/HelloWorldApp.csproj'
