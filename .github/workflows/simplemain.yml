@@ -6,9 +6,9 @@ on:
       - master
 
 env:
-  PROJECT_PATH: 'HelloWorldApp/HelloWorldApp.csproj'
-  BUILD_OUTPUT_PATH: 'HelloWorldApp/bin/Release/net8.0'
-  REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/HelloWorldApp' # The path on your EC2 instance
+  PROJECT_PATH: 'CICD-Demo-Project/CICD-Demo-Project.csproj'
+  BUILD_OUTPUT_PATH: 'CICD-Demo-Project/bin/Release/net8.0'
+  REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/CICD-Demo-Project' # The path on your EC2 instance
 
 jobs:
   build-and-deploy:
