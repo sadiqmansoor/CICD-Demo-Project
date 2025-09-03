@@ -30,12 +30,16 @@ jobs:
         run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            mkdir "${{ env.REMOTE_DEPLOY_PATH }}"
-            cd "${{ env.REMOTE_DEPLOY_PATH }}"
-            unzip -o deploy-bundle.zip
+        run:
+        # Use PowerShell to transfer the file and execute commands
+        $pw = ConvertTo-SecureString -String "${{ secrets.SSH_PRIVATE_KEY }}" -AsPlainText -Force
+        $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.SSH_USERNAME }}", $pw)
+
+        # Transfer the zipped file
+        scp -i "$env:HOMEPATH\.ssh\id_rsa" deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}/deploy-bundle.zip
+
+        # Execute remote commands
+        ssh -i "$env:HOMEPATH\.ssh\id_rsa" ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+        cd ${{ env.REMOTE_DEPLOY_PATH }}
+        Expand-Archive -Path deploy-bundle.zip -DestinationPath . -Force
+        "
