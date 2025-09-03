@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  PROJECT_PATH: 'CICD-Demo-Project/blob/master/CICD-Demo.csproj'
+  PROJECT_PATH: 'CICD-Demo.csproj'
   BUILD_OUTPUT_PATH: 'bin/Release/net8.0'
   REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/CICD-Demo-Project' # The path on your EC2 instance
 
