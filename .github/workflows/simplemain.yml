@@ -1,0 +1,41 @@
+name: Deploy .NET Console App to EC2 via SSH
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_PATH: 'HelloWorldApp/HelloWorldApp.csproj'
+  BUILD_OUTPUT_PATH: 'HelloWorldApp/bin/Release/net8.0'
+  REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/HelloWorldApp' # The path on your EC2 instance
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore and Build
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release
+
+      - name: Create deployment bundle
+        run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir "${{ env.REMOTE_DEPLOY_PATH }}"
+            cd "${{ env.REMOTE_DEPLOY_PATH }}"
+            unzip -o deploy-bundle.zip
