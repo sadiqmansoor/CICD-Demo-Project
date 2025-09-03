@@ -7,7 +7,7 @@ on:
 
 env:
   PROJECT_PATH: 'CICD-Demo-Project/CICD-Demo-Project.csproj'
-  BUILD_OUTPUT_PATH: 'CICD-Demo-Project/bin/Release/net8.0'
+  BUILD_OUTPUT_PATH: 'bin/Release/net8.0'
   REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/CICD-Demo-Project' # The path on your EC2 instance
 
 jobs:
