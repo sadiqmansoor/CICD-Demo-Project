@@ -29,14 +29,27 @@ jobs:
       - name: Create deployment bundle
         run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
 
+      - name: Set up SSH key for transfer
+        shell: pwsh
+        run: |
+          # Create a .ssh directory if it doesn't exist
+          if (-not (Test-Path "$env:HOMEPATH\.ssh")) {
+            New-Item -Path "$env:HOMEPATH\.ssh" -ItemType Directory
+          }
+          # Write the private key to a file
+          Set-Content -Path "$env:HOMEPATH\.ssh\id_rsa" -Value "${{ secrets.SSH_PRIVATE_KEY }}" -NoNewline
+          # Secure the key file
+          $acl = Get-Acl "$env:HOMEPATH\.ssh\id_rsa"
+          $acl.SetAccessRuleProtection($true, $false)
+          $acl.RemoveAccessRule((Get-AccessRule "$env:HOMEPATH\.ssh\id_rsa" -Identity "Everyone" -Type Allow))
+          Set-Acl -Path "$env:HOMEPATH\.ssh\id_rsa" -AclObject $acl
+          Write-Host "SSH private key file created and secured."
+
       - name: Deploy files to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "deploy-bundle.zip"
-          target: "${{ env.REMOTE_DEPLOY_PATH }}"
+        shell: pwsh
+        run: |
+          # SCP command via PowerShell. Ensure you have SSH client installed on the runner.
+          scp -i "$env:HOMEPATH\.ssh\id_rsa" deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}/
 
       - name: Execute remote commands on EC2
         uses: appleboy/ssh-action@v1.0.3
