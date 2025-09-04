@@ -30,10 +30,9 @@ jobs:
       - name: Create deployment bundle
         run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
 
-      - name: Deploy via SSH
-        run:
-        # Use PowerShell to transfer the file and execute commands
-        $pw = ConvertTo-SecureString -String "${{ secrets.SSH_PRIVATE_KEY }}" -AsPlainText -Force
+      - name: Convert SSH Key to SecureString
+        shell: pwsh
+         run: $pw = ConvertTo-SecureString -String "${{ secrets.SSH_PRIVATE_KEY }}" -AsPlainText -Force
         $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.SSH_USERNAME }}", $pw)
 
         # Transfer the zipped file
