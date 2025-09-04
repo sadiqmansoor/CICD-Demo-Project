@@ -1,0 +1,46 @@
+
+name: Deploy .NET Console App to EC2 via SSH
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  PROJECT_PATH: 'CICD-Demo.csproj'
+  BUILD_OUTPUT_PATH: 'bin/Release/net8.0'
+  REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/CICD-Demo-Project' # The path on your EC2 instance
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore and Build
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release
+
+      - name: Create deployment bundle
+        run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
+
+      - name: Deploy via SSH
+        run:
+        # Use PowerShell to transfer the file and execute commands
+        $pw = ConvertTo-SecureString -String "${{ secrets.SSH_PRIVATE_KEY }}" -AsPlainText -Force
+        $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.SSH_USERNAME }}", $pw)
+
+        # Transfer the zipped file
+        scp -i "$env:HOMEPATH\.ssh\id_rsa" deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}/deploy-bundle.zip
+
+        # Execute remote commands
+        ssh -i "$env:HOMEPATH\.ssh\id_rsa" ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+        cd ${{ env.REMOTE_DEPLOY_PATH }}
+        Expand-Archive -Path deploy-bundle.zip -DestinationPath . -Force
+        "
