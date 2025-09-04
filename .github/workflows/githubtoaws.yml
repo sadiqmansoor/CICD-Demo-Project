@@ -1,4 +1,3 @@
-
 name: Deploy .NET Console App to EC2 via SSH
 
 on:
@@ -9,7 +8,7 @@ on:
 env:
   PROJECT_PATH: 'CICD-Demo.csproj'
   BUILD_OUTPUT_PATH: 'bin/Release/net8.0'
-  REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/CICD-Demo-Project' # The path on your EC2 instance
+  REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/CICD-Demo-Project'
 
 jobs:
   build-and-deploy:
@@ -30,16 +29,21 @@ jobs:
       - name: Create deployment bundle
         run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
 
-      - name: Convert SSH Key to SecureString
-        shell: pwsh
-         run: $pw = ConvertTo-SecureString -String "${{ secrets.SSH_PRIVATE_KEY }}" -AsPlainText -Force
-        $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.SSH_USERNAME }}", $pw)
+      - name: Deploy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "deploy-bundle.zip"
+          target: "${{ env.REMOTE_DEPLOY_PATH }}"
 
-        # Transfer the zipped file
-        scp -i "$env:HOMEPATH\.ssh\id_rsa" deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}/deploy-bundle.zip
-
-        # Execute remote commands
-        ssh -i "$env:HOMEPATH\.ssh\id_rsa" ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
-        cd ${{ env.REMOTE_DEPLOY_PATH }}
-        Expand-Archive -Path deploy-bundle.zip -DestinationPath . -Force
-        "
+      - name: Execute remote commands on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ env.REMOTE_DEPLOY_PATH }}
+            Expand-Archive -Path deploy-bundle.zip -DestinationPath . -Force
