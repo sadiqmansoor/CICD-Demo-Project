@@ -8,7 +8,7 @@ on:
 env:
   PROJECT_PATH: 'CICD-Demo.csproj'
   BUILD_OUTPUT_PATH: 'bin/Release/net8.0'
-  REMOTE_DEPLOY_PATH: 'C:/Users/Administrator/Desktop/CICD-Demo-Project'
+  REMOTE_DEPLOY_PATH: '/home/ec2-user/CICD-Demo-Project'  # Adjust if using Windows EC2
 
 jobs:
   build-and-deploy:
@@ -27,33 +27,29 @@ jobs:
         run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release
 
       - name: Create deployment bundle
-        run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "${{ env.BUILD_OUTPUT_PATH }}/*" -DestinationPath deploy-bundle.zip
 
       - name: Set up SSH key for transfer
         shell: pwsh
         run: |
-          # Install the NTFSSecurity module
-          Install-Module -Name NTFSSecurity -Force -Scope CurrentUser
-
-          # Create a .ssh directory if it doesn't exist
-          if (-not (Test-Path "$env:HOMEPATH\.ssh")) {
-            New-Item -Path "$env:HOMEPATH\.ssh" -ItemType Directory
+          $sshPath = "$env:USERPROFILE\.ssh"
+          if (-not (Test-Path $sshPath)) {
+            New-Item -Path $sshPath -ItemType Directory
           }
-          # Write the private key to a file
-          Set-Content -Path "$env:HOMEPATH\.ssh\id_rsa" -Value "${{ secrets.SSH_PRIVATE_KEY }}" -NoNewline
-          
-          # Secure the key file
-          $acl = Get-Acl "$env:HOMEPATH\.ssh\id_rsa"
-          $acl.SetAccessRuleProtection($true, $false)
-          $acl.RemoveAccessRule((Get-AccessRule "$env:HOMEPATH\.ssh\id_rsa" -Identity "Everyone" -Type Allow))
-          Set-Acl -Path "$env:HOMEPATH\.ssh\id_rsa" -AclObject $acl
-          Write-Host "SSH private key file created and secured."
+
+          $keyPath = "$sshPath\id_rsa"
+          Set-Content -Path $keyPath -Value "${{ secrets.SSH_PRIVATE_KEY }}" -NoNewline
+          icacls $keyPath /inheritance:r
+          icacls $keyPath /grant:r "$($env:USERNAME):R"
+          Write-Host "SSH key saved and permissions set."
 
       - name: Deploy files to EC2
         shell: pwsh
         run: |
-          # Use scp command to transfer the zipped file
-          scp -i "$env:HOMEPATH\.ssh\id_rsa" deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}/
+          $scpExe = "C:\Program Files\Git\usr\bin\scp.exe"
+          & $scpExe -i "$env:USERPROFILE\.ssh\id_rsa" -o StrictHostKeyChecking=no deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}
 
       - name: Execute remote commands on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -63,4 +59,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ${{ env.REMOTE_DEPLOY_PATH }}
-            Expand-Archive -Path deploy-bundle.zip -DestinationPath . -Force
+            unzip -o deploy-bundle.zip
