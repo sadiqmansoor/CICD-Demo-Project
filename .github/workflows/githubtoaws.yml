@@ -32,12 +32,16 @@ jobs:
       - name: Set up SSH key for transfer
         shell: pwsh
         run: |
+          # Install the NTFSSecurity module
+          Install-Module -Name NTFSSecurity -Force -Scope CurrentUser
+
           # Create a .ssh directory if it doesn't exist
           if (-not (Test-Path "$env:HOMEPATH\.ssh")) {
             New-Item -Path "$env:HOMEPATH\.ssh" -ItemType Directory
           }
           # Write the private key to a file
           Set-Content -Path "$env:HOMEPATH\.ssh\id_rsa" -Value "${{ secrets.SSH_PRIVATE_KEY }}" -NoNewline
+          
           # Secure the key file
           $acl = Get-Acl "$env:HOMEPATH\.ssh\id_rsa"
           $acl.SetAccessRuleProtection($true, $false)
@@ -48,7 +52,7 @@ jobs:
       - name: Deploy files to EC2
         shell: pwsh
         run: |
-          # SCP command via PowerShell. Ensure you have SSH client installed on the runner.
+          # Use scp command to transfer the zipped file
           scp -i "$env:HOMEPATH\.ssh\id_rsa" deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}/
 
       - name: Execute remote commands on EC2
