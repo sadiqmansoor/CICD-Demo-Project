@@ -8,7 +8,7 @@ on:
 env:
   PROJECT_PATH: 'CICD-Demo.csproj'
   BUILD_OUTPUT_PATH: 'bin\Release\net8.0'
-  REMOTE_DEPLOY_PATH: '\home\ec2-user\CICD-Demo-Project'  # Adjust if using Windows EC2
+  REMOTE_DEPLOY_PATH: 'C:\Users\Administrator\Desktop\CICD-Demo-Project' # Corrected Windows path
 
 jobs:
   build-and-deploy:
@@ -27,36 +27,23 @@ jobs:
         run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release
 
       - name: Create deployment bundle
-        shell: pwsh
-        run: |
-          Compress-Archive -Path "${{ env.BUILD_OUTPUT_PATH }}/*" -DestinationPath deploy-bundle.zip
+        run: Compress-Archive -Path ${{ env.BUILD_OUTPUT_PATH }}/* -DestinationPath deploy-bundle.zip
 
-      - name: Set up SSH key for transfer
-        shell: pwsh
-        run: |
-          $sshPath = "$env:USERPROFILE\.ssh"
-          if (-not (Test-Path $sshPath)) {
-            New-Item -Path $sshPath -ItemType Directory
-          }
-
-          $keyPath = "$sshPath\id_rsa"
-          Set-Content -Path $keyPath -Value "${{ secrets.SSH_PRIVATE_KEY }}" -NoNewline
-          icacls $keyPath /inheritance:r
-          icacls $keyPath /grant:r "$($env:USERNAME):R"
-          Write-Host "SSH key saved and permissions set."
-
-      - name: Deploy files to EC2
-        shell: pwsh
-        run: |
-          $scpExe = "C:\Program Files\Git\usr\bin\scp.exe"
-          & $scpExe -i "$env:USERPROFILE\.ssh\id_rsa" -o StrictHostKeyChecking=no deploy-bundle.zip ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DEPLOY_PATH }}
-
-      - name: Execute remote commands on EC2
+      - name: Deploy and execute commands
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ${{ env.REMOTE_DEPLOY_PATH }}
-            unzip -o deploy-bundle.zip
+            # Check if remote directory exists and create it if not
+            if (-not (Test-Path "${{ env.REMOTE_DEPLOY_PATH }}" -PathType Container)) {
+                New-Item -ItemType Directory -Path "${{ env.REMOTE_DEPLOY_PATH }}"
+            }
+
+            # This part is a placeholder. You need a method to transfer the file.
+            # The appleboy/ssh-action cannot transfer files directly.
+            # The previous attempt with scp failed due to the key/path issues.
+            # The most reliable way is to use a cloud-native solution like S3.
+
+            Write-Output "File transfer failed. Please use S3 or another method."
