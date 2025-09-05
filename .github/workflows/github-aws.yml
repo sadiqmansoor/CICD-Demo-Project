@@ -21,11 +21,12 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    - name: Build solution without output override
+      run: dotnet build CICD-Demo.sln --configuration Release
 
-    - name: Publish
-      run: dotnet publish --configuration Release --output ./publish --no-build
+    - name: Publish project with output folder
+      run: dotnet publish CICD-Demo.csproj --configuration Release --output ./publish
+
 
     - name: Deploy to AWS Windows Server 2025 via SSH
       uses: appleboy/ssh-action@v0.1.8
