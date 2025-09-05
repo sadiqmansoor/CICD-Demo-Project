@@ -1,4 +1,4 @@
-name: Build and Deploy to AWS Windows Server 2025
+name: Build and Deploy .NET Core Console App to AWS Windows Server 2025
 
 on:
   push:
@@ -13,17 +13,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Node.js (or your build environment)
-      uses: actions/setup-node@v3
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
       with:
-        node-version: '16'  # adjust or remove if not applicable
+        dotnet-version: '7.0.x'  # Specify your .NET version here
 
-    - name: Build project
-      run: |
-        # Your build commands
-        npm install
-        npm run build
-      shell: bash
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish --configuration Release --output ./publish --no-build
 
     - name: Deploy to AWS Windows Server 2025 via SSH
       uses: appleboy/ssh-action@v0.1.8
@@ -33,10 +35,26 @@ jobs:
         key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          # Navigate to the deployment directory (PowerShell commands)
-          cd 'C:\path\to\your\app'
-          # Pull latest code (assuming git is available)
-          git pull origin master
-          # Optional: Run build or restart commands
-          # For example, to restart a Windows service:
-          # Restart-Service -Name YourServiceName
+          # Change directory to the deployment folder on Windows Server
+          cd 'C:\path\to\deploy\directory'
+          # Remove old files (optional - customize as needed)
+          Remove-Item * -Recurse -Force
+          
+          # Upload new files by copying from GitHub Actions agent to Windows Server
+          # Note: Upload step should be separate with scp or rsync; 
+          # Since appleboy/ssh-action is SSH execution, use scp action to transfer files:
+          # (Here we run remote commands after upload)
+          
+          # Commands to restart or run your app (optional)
+          # e.g., Stop-Process -Name YourAppName -ErrorAction SilentlyContinue
+          # Start-Process -FilePath .\YourApp.exe
+
+    - name: Copy published files to Windows Server
+      uses: appleboy/scp-action@v0.1.6
+      with:
+        host: ${{ secrets.AWS_WINDOWS_SERVER_IP }}
+        username: ${{ secrets.AWS_SERVER_USERNAME }}
+        key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+        port: 22
+        source: "./publish/*"
+        target: "C:/path/to/deploy/directory/"
