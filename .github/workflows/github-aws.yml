@@ -1,0 +1,42 @@
+name: Build and Deploy to AWS Windows Server 2025
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js (or your build environment)
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'  # adjust or remove if not applicable
+
+    - name: Build project
+      run: |
+        # Your build commands
+        npm install
+        npm run build
+      shell: bash
+
+    - name: Deploy to AWS Windows Server 2025 via SSH
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.AWS_WINDOWS_SERVER_IP }}
+        username: ${{ secrets.AWS_SERVER_USERNAME }}
+        key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          # Navigate to the deployment directory (PowerShell commands)
+          cd 'C:\path\to\your\app'
+          # Pull latest code (assuming git is available)
+          git pull origin master
+          # Optional: Run build or restart commands
+          # For example, to restart a Windows service:
+          # Restart-Service -Name YourServiceName
