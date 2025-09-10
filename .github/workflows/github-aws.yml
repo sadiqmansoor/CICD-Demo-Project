@@ -28,7 +28,7 @@ jobs:
       run: dotnet publish CICD-Demo.csproj -c Release -r win-x64 --self-contained true -o ./publish
 
     - name: Upload published artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-publish
         path: ./publish
