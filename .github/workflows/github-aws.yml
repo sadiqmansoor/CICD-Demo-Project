@@ -48,8 +48,8 @@ jobs:
     - name: Copy files to Windows EC2
       uses: appleboy/scp-action@v0.1.6
       with:
-        host: ${{ secrets.AWS_WINDOWS_SERVER_IP }}
-        username: ${{ secrets.AWS_SERVER_USERNAME }}
+        host: ${{ vars.AWS_WINDOWS_SERVER_IP }}
+        username: ${{ vars.AWS_SERVER_USERNAME }}
         key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
         port: 22
         source: "./publish/*"
