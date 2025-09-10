@@ -1,56 +1,51 @@
-name: Build and Deploy .NET Core Console App to AWS Windows Server 2025
+name: Build and Deploy .NET Console App to AWS Windows EC2
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
 
 jobs:
-  build-and-deploy:
+  build:
+    name: Build .NET Console App
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v3
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'  # Specify your .NET version here
+        dotnet-version: '8.0.x'
 
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build solution without output override
-      run: dotnet build CICD-Demo.sln --configuration Release
+    - name: Build project
+      run: dotnet build CICD-Demo.csproj --configuration Release
 
-    - name: Publish project with output folder
-      run: dotnet publish CICD-Demo.csproj --configuration Release --output ./publish
+    - name: Publish for Windows
+      run: dotnet publish CICD-Demo.csproj -c Release -r win-x64 --self-contained true -o ./publish
 
-
-    - name: Deploy to AWS Windows Server 2025 via SSH
-      uses: appleboy/ssh-action@v0.1.8
+    - name: Upload published artifacts
+      uses: actions/upload-artifact@v3
       with:
-        host: ${{ secrets.AWS_WINDOWS_SERVER_IP }}
-        username: ${{ secrets.AWS_SERVER_USERNAME }}
-        key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          # Change directory to the deployment folder on Windows Server
-          cd 'C:\path\to\deploy\directory'
-          # Remove old files (optional - customize as needed)
-          Remove-Item * -Recurse -Force
-          
-          # Upload new files by copying from GitHub Actions agent to Windows Server
-          # Note: Upload step should be separate with scp or rsync; 
-          # Since appleboy/ssh-action is SSH execution, use scp action to transfer files:
-          # (Here we run remote commands after upload)
-          
-          # Commands to restart or run your app (optional)
-          # e.g., Stop-Process -Name YourAppName -ErrorAction SilentlyContinue
-          # Start-Process -FilePath .\YourApp.exe
+        name: windows-publish
+        path: ./publish
 
-    - name: Copy published files to Windows Server
+  deploy:
+    name: Deploy to AWS Windows EC2
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Download published artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: windows-publish
+        path: ./publish
+
+    - name: Copy files to Windows EC2
       uses: appleboy/scp-action@v0.1.6
       with:
         host: ${{ secrets.AWS_WINDOWS_SERVER_IP }}
@@ -58,4 +53,20 @@ jobs:
         key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
         port: 22
         source: "./publish/*"
-        target: "C:/path/to/deploy/directory/"
+        target: "C:/AppDeploy/ConsoleApp/"
+
+    - name: Run app on Windows EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ vars.AWS_WINDOWS_SERVER_IP }}
+        username: ${{ vars.AWS_SERVER_USERNAME }}
+        key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          powershell.exe -Command "
+            cd 'C:\AppDeploy\ConsoleApp';
+            Write-Host 'Stopping any existing instance...';
+            Stop-Process -Name 'CICD-Demo' -ErrorAction SilentlyContinue;
+            Write-Host 'Starting new instance...';
+            Start-Process -FilePath '.\CICD-Demo.exe';
+          "
