@@ -50,7 +50,7 @@ jobs:
         echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" | head -5
         echo "Username: ${{ vars.AWS_SERVER_USERNAME }}"
     - name: Copy files to Windows EC2
-      uses: appleboy/scp-action@v0.1.6
+      uses: appleboy/scp-action@master
       with:
         host: ${{ vars.AWS_WINDOWS_SERVER_IP }}
         username: ${{ vars.AWS_SERVER_USERNAME }}
